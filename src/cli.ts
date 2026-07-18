@@ -40,7 +40,7 @@ const saveWallet = (mnemonic: string): void => {
 const loadWallet = (): WalletKeys => {
     if (!fs.existsSync(WALLET_FILE)) {
         throw new Error(
-            `no hay wallet en ${WALLET_FILE}. Crea una con "new" o "restore".`,
+            `no wallet found at ${WALLET_FILE}. Create one with "new" or "restore".`,
         );
     }
     const data: WalletFile = JSON.parse(fs.readFileSync(WALLET_FILE, 'utf8'));
@@ -65,15 +65,15 @@ const withClient = async <T>(
 const confirm = async (question: string): Promise<boolean> => {
     if (process.argv.includes('--yes') || process.argv.includes('-y')) return true;
     const rl = readline.createInterface({ input: stdin, output: stdout });
-    const answer = (await rl.question(`${question} [s/N] `)).trim().toLowerCase();
+    const answer = (await rl.question(`${question} [y/N] `)).trim().toLowerCase();
     rl.close();
-    return answer === 's' || answer === 'si' || answer === 'y' || answer === 'yes';
+    return answer === 'y' || answer === 'yes';
 };
 
 const printWalletHeader = (w: WalletKeys): void => {
-    console.log(`Red:       ${w.network} (servidor ${SERVER_HOST}:${SERVER_PORT})`);
-    console.log(`Ruta:      ${w.derivationPath}`);
-    console.log(`Dirección: ${w.address}`);
+    console.log(`Network: ${w.network} (server ${SERVER_HOST}:${SERVER_PORT})`);
+    console.log(`Path:    ${w.derivationPath}`);
+    console.log(`Address: ${w.address}`);
 };
 
 // --- Comandos ----------------------------------------------------------------
@@ -81,29 +81,29 @@ const printWalletHeader = (w: WalletKeys): void => {
 const cmdNew = (): void => {
     if (fs.existsSync(WALLET_FILE)) {
         console.error(
-            `Ya existe una wallet en ${WALLET_FILE}. Bórrala manualmente si quieres crear otra.`,
+            `A wallet already exists at ${WALLET_FILE}. Delete it manually if you want to create another.`,
         );
         process.exit(1);
     }
     const mnemonic = createMnemonic();
     saveWallet(mnemonic);
     const w = deriveWallet(mnemonic, NETWORK);
-    console.log('Wallet creada.\n');
+    console.log('Wallet created.\n');
     printWalletHeader(w);
-    console.log(`\nMnemónica (12 palabras — ¡guárdala!):\n  ${mnemonic}`);
-    console.log(`\nGuardada en: ${WALLET_FILE}`);
-    console.log('AVISO: la mnemónica se guarda EN CLARO. Úsala solo en chipnet.');
+    console.log(`\nMnemonic (12 words — keep it safe!):\n  ${mnemonic}`);
+    console.log(`\nSaved to: ${WALLET_FILE}`);
+    console.log('WARNING: the mnemonic is stored in PLAINTEXT. Use it only on chipnet.');
 };
 
 const cmdRestore = (mnemonic: string): void => {
-    if (!mnemonic) throw new Error('uso: restore "palabra1 palabra2 ... palabra12"');
+    if (!mnemonic) throw new Error('usage: restore "word1 word2 ... word12"');
     const invalid = validateMnemonic(mnemonic);
-    if (invalid) throw new Error(`mnemónica inválida: ${invalid}`);
+    if (invalid) throw new Error(`invalid mnemonic: ${invalid}`);
     saveWallet(mnemonic.trim());
     const w = deriveWallet(mnemonic, NETWORK);
-    console.log('Wallet restaurada.\n');
+    console.log('Wallet restored.\n');
     printWalletHeader(w);
-    console.log(`\nGuardada en: ${WALLET_FILE}`);
+    console.log(`\nSaved to: ${WALLET_FILE}`);
 };
 
 const cmdInfo = (): void => {
@@ -115,10 +115,10 @@ const cmdBalance = async (): Promise<void> => {
     const w = loadWallet();
     printWalletHeader(w);
     const bal = await withClient((c) => c.getBalance(w.address));
-    console.log(`\nConfirmado:    ${satsToBch(bal.confirmed)} BCH (${bal.confirmed} sat)`);
-    console.log(`Sin confirmar: ${satsToBch(bal.unconfirmed)} BCH (${bal.unconfirmed} sat)`);
+    console.log(`\nConfirmed:   ${satsToBch(bal.confirmed)} BCH (${bal.confirmed} sat)`);
+    console.log(`Unconfirmed: ${satsToBch(bal.unconfirmed)} BCH (${bal.unconfirmed} sat)`);
     console.log(
-        `Total:         ${satsToBch(bal.confirmed + bal.unconfirmed)} BCH`,
+        `Total:       ${satsToBch(bal.confirmed + bal.unconfirmed)} BCH`,
     );
 };
 
@@ -126,79 +126,79 @@ const cmdHistory = async (): Promise<void> => {
     const w = loadWallet();
     const history = await withClient((c) => c.getHistory(w.address));
     if (history.length === 0) {
-        console.log('Sin transacciones.');
+        console.log('No transactions.');
         return;
     }
-    console.log(`${history.length} transacción(es):`);
+    console.log(`${history.length} transaction(s):`);
     for (const tx of history) {
-        const status = tx.height > 0 ? `bloque ${tx.height}` : 'sin confirmar';
+        const status = tx.height > 0 ? `block ${tx.height}` : 'unconfirmed';
         console.log(`  ${tx.tx_hash}  (${status})`);
     }
 };
 
 const cmdSend = async (toAddress: string, amountArg: string): Promise<void> => {
     if (!toAddress || !amountArg)
-        throw new Error('uso: send <dirección> <importe_bch>');
+        throw new Error('usage: send <address> <amount_bch>');
     const amountSats = bchToSats(Number(amountArg));
     if (!Number.isFinite(amountSats) || amountSats <= 0)
-        throw new Error(`importe inválido: ${amountArg}`);
+        throw new Error(`invalid amount: ${amountArg}`);
     if (amountSats < DUST_LIMIT)
-        throw new Error(`importe por debajo del polvo (${DUST_LIMIT} sat)`);
+        throw new Error(`amount below dust limit (${DUST_LIMIT} sat)`);
 
     const w = loadWallet();
 
     await withClient(async (client) => {
         const utxos = await client.listUnspent(w.address);
-        if (utxos.length === 0) throw new Error('no hay UTXOs disponibles para gastar');
+        if (utxos.length === 0) throw new Error('no UTXOs available to spend');
 
         const result = buildTransaction(w, utxos, toAddress, amountSats);
 
-        console.log('Transacción preparada:');
-        console.log(`  Desde:    ${w.address}`);
-        console.log(`  Hacia:    ${toAddress}`);
-        console.log(`  Importe:  ${satsToBch(amountSats)} BCH (${amountSats} sat)`);
-        console.log(`  Comisión: ${satsToBch(result.fee)} BCH (${result.fee} sat)`);
-        console.log(`  Cambio:   ${satsToBch(result.change)} BCH (${result.change} sat)`);
-        console.log(`  Entradas: ${result.inputsUsed}`);
-        console.log(`  TXID:     ${result.txid}`);
+        console.log('Transaction prepared:');
+        console.log(`  From:   ${w.address}`);
+        console.log(`  To:     ${toAddress}`);
+        console.log(`  Amount: ${satsToBch(amountSats)} BCH (${amountSats} sat)`);
+        console.log(`  Fee:    ${satsToBch(result.fee)} BCH (${result.fee} sat)`);
+        console.log(`  Change: ${satsToBch(result.change)} BCH (${result.change} sat)`);
+        console.log(`  Inputs: ${result.inputsUsed}`);
+        console.log(`  TXID:   ${result.txid}`);
 
-        if (!(await confirm('\n¿Firmar y transmitir esta transacción?'))) {
-            console.log('Cancelada.');
+        if (!(await confirm('\nSign and broadcast this transaction?'))) {
+            console.log('Cancelled.');
             return;
         }
 
         const txid = await client.broadcast(result.rawTxHex);
-        console.log(`\n✓ Transmitida. TXID: ${txid}`);
+        console.log(`\n✓ Broadcast. TXID: ${txid}`);
     });
 };
 
 const cmdDump = (): void => {
     const w = loadWallet();
     printWalletHeader(w);
-    console.log(`Clave pública: ${Buffer.from(w.publicKey).toString('hex')}`);
-    console.log('\nMnemónica:');
+    console.log(`Public key: ${Buffer.from(w.publicKey).toString('hex')}`);
+    console.log('\nMnemonic:');
     console.log(`  ${w.mnemonic}`);
 };
 
 const usage = (): void => {
     console.log(`BCH Wallet CLI (chipnet) — @bitauth/libauth
 
-Uso:  node src/cli.ts <comando> [args]
+Usage:  node src/cli.ts <command> [args]
 
-Comandos:
-  new                         Crea una wallet nueva y guarda la mnemónica
-  restore "<12 palabras>"     Restaura una wallet desde su mnemónica
-  info                        Muestra red, ruta de derivación y dirección
-  balance                     Consulta el saldo en el servidor
-  history                     Lista el historial de transacciones
-  send <dirección> <bch>      Envía BCH (añade -y para omitir confirmación)
-  dump                        Muestra clave pública y mnemónica (¡sensible!)
+Commands:
+  new                       Create a new wallet and save the mnemonic
+  restore "<12 words>"      Restore a wallet from its mnemonic
+  info                      Show network, derivation path and address
+  balance                   Query the balance from the server
+  history                   List the transaction history
+  send <address> <bch>      Send BCH (add -y to skip confirmation)
+  dump                      Show public key and mnemonic (sensitive!)
 
-Variables de entorno:
-  BCH_NETWORK      red: chipnet (def.) | testnet | mainnet
-  BCH_SERVER       host del servidor Fulcrum (def. chipnet.imaginary.cash)
-  BCH_PORT         puerto TLS (def. 50002)
-  BCH_WALLET_FILE  ruta del archivo de wallet (def. ./wallet.json)
+Environment variables:
+  BCH_NETWORK      network: chipnet (default) | testnet | mainnet
+  BCH_SERVER       Fulcrum server host (default chipnet.imaginary.cash)
+  BCH_PORT         TLS port (default 50002)
+  BCH_WALLET_FILE  wallet file path (default ./wallet.json)
 `);
 };
 
@@ -237,7 +237,7 @@ const main = async (): Promise<void> => {
                 usage();
                 break;
             default:
-                console.error(`Comando desconocido: ${command}\n`);
+                console.error(`Unknown command: ${command}\n`);
                 usage();
                 process.exit(1);
         }

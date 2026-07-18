@@ -52,7 +52,7 @@ export class ElectrumClient {
                 this.pending.clear();
             });
             this.socket.on('close', () => {
-                const err = new Error('conexión cerrada por el servidor');
+                const err = new Error('connection closed by the server');
                 for (const { reject: rj } of this.pending.values()) rj(err);
                 this.pending.clear();
             });
@@ -86,7 +86,7 @@ export class ElectrumClient {
     }
 
     private call<T = any>(method: string, params: unknown[] = []): Promise<T> {
-        if (!this.socket) throw new Error('cliente no conectado');
+        if (!this.socket) throw new Error('client not connected');
         const id = this.nextId++;
         const payload = JSON.stringify({ jsonrpc: '2.0', id, method, params });
         return new Promise<T>((resolve, reject) => {

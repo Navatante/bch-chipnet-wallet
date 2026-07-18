@@ -77,7 +77,7 @@ export const deriveWallet = (
     network: Network = 'chipnet',
 ): WalletKeys => {
     const invalid = validateMnemonic(mnemonic);
-    if (invalid) throw new Error(`mnemónica inválida: ${invalid}`);
+    if (invalid) throw new Error(`invalid mnemonic: ${invalid}`);
 
     const master = deriveHdPrivateNodeFromBip39Mnemonic(mnemonic.trim());
     const derivationPath = `m/44'/${COIN_TYPE[network]}'/0'/0/0`;
@@ -114,7 +114,7 @@ export const deriveWallet = (
 const addressToLockingBytecode = (address: string): Uint8Array => {
     const decoded = cashAddressToLockingBytecode(address);
     if (typeof decoded === 'string')
-        throw new Error(`dirección inválida "${address}": ${decoded}`);
+        throw new Error(`invalid address "${address}": ${decoded}`);
     return decoded.bytecode;
 };
 
@@ -146,7 +146,7 @@ export const buildTransaction = (
 ): BuildResult => {
     if (amountSats < DUST_LIMIT)
         throw new Error(
-            `el importe (${amountSats} sat) está por debajo del límite de polvo (${DUST_LIMIT} sat)`,
+            `the amount (${amountSats} sat) is below the dust limit (${DUST_LIMIT} sat)`,
         );
 
     const recipientLock = addressToLockingBytecode(toAddress);
@@ -169,9 +169,9 @@ export const buildTransaction = (
     }
     if (!covered)
         throw new Error(
-            `fondos insuficientes: disponible ${inputTotal} sat, se necesitan ${
+            `insufficient funds: available ${inputTotal} sat, need ${
                 amountSats + fee
-            } sat (importe + comisión)`,
+            } sat (amount + fee)`,
         );
 
     // ¿El cambio supera el polvo? Si no, se descarta a favor de la comisión.
