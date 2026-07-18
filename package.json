@@ -1,0 +1,27 @@
+{
+  "name": "bch-chipnet-wallet",
+  "version": "1.0.0",
+  "description": "Wallet CLI de Bitcoin Cash (BCH) para chipnet, construida con @bitauth/libauth",
+  "main": "src/cli.ts",
+  "type": "module",
+  "scripts": {
+    "wallet": "node src/cli.ts",
+    "start": "node src/cli.ts help"
+  },
+  "keywords": [
+    "bitcoin-cash",
+    "bch",
+    "chipnet",
+    "wallet",
+    "cli",
+    "libauth"
+  ],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@bitauth/libauth": "^3.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^26.1.1"
+  }
+}

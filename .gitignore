@@ -1,0 +1,14 @@
+# Dependencias
+node_modules/
+
+# Archivos de wallet (contienen la mnemónica EN CLARO — nunca versionar)
+wallet.json
+*.wallet.json
+
+# Logs y temporales
+*.log
+npm-debug.log*
+
+# Sistema operativo
+.DS_Store
+Thumbs.db
