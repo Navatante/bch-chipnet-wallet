@@ -1,16 +1,16 @@
 # BCH Wallet CLI (chipnet)
 
-*[English version](./README.en.md)*
+*[Versión en español](./README.es.md)*
 
-Wallet sencilla de línea de comandos para **Bitcoin Cash** sobre **chipnet**,
-construida con [`@bitauth/libauth`](https://libauth.org/). Sin dependencias
-extra: el cliente del servidor usa el módulo `tls` nativo de Node.
+A simple command-line wallet for **Bitcoin Cash** on **chipnet**, built with
+[`@bitauth/libauth`](https://libauth.org/). No extra dependencies: the server
+client uses Node's native `tls` module.
 
-## Requisitos
+## Requirements
 
-- Node.js ≥ 22 (probado con v26; usa el soporte nativo de TypeScript).
+- Node.js ≥ 22 (tested on v26; uses native TypeScript support).
 
-## Instalación
+## Installation
 
 ```bash
 git clone https://github.com/Navatante/bch-chipnet-wallet.git
@@ -18,61 +18,60 @@ cd bch-chipnet-wallet
 npm install
 ```
 
-Esto instala la única dependencia (`@bitauth/libauth`). No hace falta ningún
-paso de compilación: Node ejecuta los archivos TypeScript directamente
-(`node src/cli.ts …`).
+This installs the single dependency (`@bitauth/libauth`). There is no build
+step: Node runs the TypeScript files directly (`node src/cli.ts …`).
 
-Comprueba que todo funciona:
+Verify it works:
 
 ```bash
-npm start          # muestra la ayuda
-# o directamente:
+npm start          # prints the help
+# or directly:
 node src/cli.ts help
 ```
 
-## Qué hace
+## What it does
 
-- Wallet HD de **una sola dirección**: `m/44'/1'/0'/0/0` (BIP39 + BIP44).
-- Genera / restaura una mnemónica de 12 palabras.
-- Consulta saldo, historial y UTXOs desde un servidor **Fulcrum** (Electrum).
-- Construye, **firma** (P2PKH, `SIGHASH_ALL|FORKID`) y **transmite** transacciones.
+- **Single-address** HD wallet: `m/44'/1'/0'/0/0` (BIP39 + BIP44).
+- Generates / restores a 12-word mnemonic.
+- Queries balance, history and UTXOs from a **Fulcrum** (Electrum) server.
+- Builds, **signs** (P2PKH, `SIGHASH_ALL|FORKID`) and **broadcasts** transactions.
 
-La firma se hace a mano con `generateSigningSerializationBCH` +
-`signMessageHashDER`, y el resultado se valida contra la VM de consenso de BCH.
+Signing is done by hand with `generateSigningSerializationBCH` +
+`signMessageHashDER`, and the result is validated against the BCH consensus VM.
 
-## Uso
+## Usage
 
 ```bash
-node src/cli.ts new                      # crea una wallet nueva
-node src/cli.ts restore "palabra1 ... palabra12"
-node src/cli.ts info                     # red, ruta y dirección
-node src/cli.ts balance                  # saldo confirmado/sin confirmar
-node src/cli.ts history                  # historial de transacciones
-node src/cli.ts send <dirección> <bch>   # enviar BCH (pide confirmación)
-node src/cli.ts send <dirección> <bch> -y   # sin confirmación
-node src/cli.ts dump                      # ver pubkey + mnemónica
+node src/cli.ts new                      # create a new wallet
+node src/cli.ts restore "word1 ... word12"
+node src/cli.ts info                     # network, path and address
+node src/cli.ts balance                  # confirmed/unconfirmed balance
+node src/cli.ts history                  # transaction history
+node src/cli.ts send <address> <bch>     # send BCH (asks for confirmation)
+node src/cli.ts send <address> <bch> -y  # skip confirmation
+node src/cli.ts dump                      # show pubkey + mnemonic
 ```
 
-Consigue BCH de prueba en un faucet de chipnet y envíalo a la dirección que
-muestra `info`. Luego `balance` y `send`.
+Get some test BCH from a chipnet faucet and send it to the address shown by
+`info`. Then try `balance` and `send`.
 
-## Configuración (variables de entorno)
+## Configuration (environment variables)
 
-| Variable          | Por defecto              | Descripción                        |
+| Variable          | Default                  | Description                        |
 | ----------------- | ------------------------ | ---------------------------------- |
 | `BCH_NETWORK`     | `chipnet`                | `chipnet` \| `testnet` \| `mainnet` |
-| `BCH_SERVER`      | `chipnet.imaginary.cash` | host del servidor Fulcrum          |
-| `BCH_PORT`        | `50002`                  | puerto TLS                         |
-| `BCH_WALLET_FILE` | `./wallet.json`          | ruta del archivo de wallet         |
+| `BCH_SERVER`      | `chipnet.imaginary.cash` | Fulcrum server host                |
+| `BCH_PORT`        | `50002`                  | TLS port                           |
+| `BCH_WALLET_FILE` | `./wallet.json`          | wallet file path                   |
 
-## ⚠️ Seguridad
+## ⚠️ Security
 
-La mnemónica se guarda **en claro** en `wallet.json` (permisos `600`). Esto es
-aceptable **solo para chipnet / pruebas**. No la uses con fondos reales de
-mainnet ni reutilices la mnemónica en una wallet real.
+The mnemonic is stored **in plaintext** in `wallet.json` (mode `600`). This is
+acceptable **only for chipnet / testing**. Do not use it with real mainnet
+funds and do not reuse the mnemonic in a real wallet.
 
-## Estructura
+## Structure
 
-- `electrum.ts` — cliente JSON-RPC mínimo para Fulcrum/Electrum sobre TLS.
-- `wallet.ts` — derivación de claves, direcciones y construcción/firma de tx.
-- `cli.ts` — interfaz de línea de comandos y persistencia.
+- `electrum.ts` — minimal JSON-RPC client for Fulcrum/Electrum over TLS.
+- `wallet.ts` — key derivation, addresses and transaction building/signing.
+- `cli.ts` — command-line interface and persistence.
