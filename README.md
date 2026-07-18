@@ -1,5 +1,7 @@
 # BCH Wallet CLI (chipnet)
 
+*[English version](./README.en.md)*
+
 Wallet sencilla de línea de comandos para **Bitcoin Cash** sobre **chipnet**,
 construida con [`@bitauth/libauth`](https://libauth.org/). Sin dependencias
 extra: el cliente del servidor usa el módulo `tls` nativo de Node.
@@ -7,6 +9,26 @@ extra: el cliente del servidor usa el módulo `tls` nativo de Node.
 ## Requisitos
 
 - Node.js ≥ 22 (probado con v26; usa el soporte nativo de TypeScript).
+
+## Instalación
+
+```bash
+git clone https://github.com/Navatante/bch-chipnet-wallet.git
+cd bch-chipnet-wallet
+npm install
+```
+
+Esto instala la única dependencia (`@bitauth/libauth`). No hace falta ningún
+paso de compilación: Node ejecuta los archivos TypeScript directamente
+(`node src/cli.ts …`).
+
+Comprueba que todo funciona:
+
+```bash
+npm start          # muestra la ayuda
+# o directamente:
+node src/cli.ts help
+```
 
 ## Qué hace
 
